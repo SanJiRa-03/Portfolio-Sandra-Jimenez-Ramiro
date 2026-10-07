@@ -96,8 +96,8 @@ const PROJECTS={
             tools:['Unity 3D','C#','DOTween'], time:'Un año académico', kind:'Proyecto académico',
             play:'https://dashdine.itch.io/dashanddine',
             cover:'assets/projects/dashdine/cover.jpg',images:['assets/projects/dashdine/shot-1.jpg','assets/projects/dashdine/shot-2.jpg'],trailer:'assets/projects/dashdine/trailer.mp4'},
-  beacon  :{title:'The Last Beacon',          year:'2026',about:'',role:'',roleList:[],tools:[],time:'',kind:'',play:'',
-            cover:'assets/projects/beacon/cover.jpg',  images:[],trailer:'',soon:true}
+  drowned :{title:'Drowned Cape',          year:'2026',about:'',role:'',roleList:[],tools:[],time:'',kind:'',play:'',
+            cover:'assets/projects/drowned/cover.jpg',  images:[],trailer:'',soon:true}
 };
 
 (()=>{
@@ -155,7 +155,7 @@ function layoutBoard(){
   const k=kind(),c=k!=='d',ox=(S.W-S.vw)/2,oy=(S.H-S.vh)/2;
   const at=(el,fx,fy,r)=>setPiece(el,ox+S.vw*fx-el.offsetWidth/2,oy+S.vh*fy-el.offsetHeight/2,r);
   setPiece($('#board-title'),ox+S.vw*(c?.05:.04),oy+(c?(k==='l'?76:84):Math.max(86,S.vh*.12)),-2);
-  /* [x, y, giro] como fracción de la pantalla, en el orden de las tarjetas: Rubbish, Whispers, Clashing, Dash&Dine, Beacon */
+  /* [x, y, giro] como fracción de la pantalla, en el orden de las tarjetas: Rubbish, Whispers, Clashing, Dash&Dine, Drowned */
   const P={
     m:[[.27,.42,-3],[.74,.36,2.5],[.27,.66,2],[.74,.61,-2.5],[.74,.86,3]],   /* móvil vertical: dos columnas escalonadas */
     l:[[.32,.76,-3],[.62,.38,2.5],[.57,.77,2],[.86,.39,-2.5],[.82,.76,3]],   /* móvil horizontal: dos filas */
