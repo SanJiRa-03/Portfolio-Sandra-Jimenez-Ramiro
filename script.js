@@ -97,7 +97,9 @@ const PROJECTS={
             play:'https://dashdine.itch.io/dashanddine',
             cover:'assets/projects/dashdine/cover.jpg',images:['assets/projects/dashdine/shot-1.jpg','assets/projects/dashdine/shot-2.jpg'],trailer:'assets/projects/dashdine/trailer.mp4'},
   drowned :{title:'Drowned Cape',          year:'2026',about:'',role:'',roleList:[],tools:[],time:'',kind:'',play:'',
-            cover:'assets/projects/drowned/cover.jpg',  images:[],trailer:'',soon:true}
+            cover:'assets/projects/drowned/cover.jpg',  images:[],trailer:'',soon:true},
+  barquillos:{title:'Cooking Barquillos In Madrid',year:'2026',about:'',role:'',roleList:[],tools:[],time:'',kind:'Game jam',play:'',
+            cover:'assets/projects/barquillos/cover.jpg',images:[],trailer:'',soon:true}
 };
 
 (()=>{
@@ -155,13 +157,58 @@ function layoutBoard(){
   const k=kind(),c=k!=='d',ox=(S.W-S.vw)/2,oy=(S.H-S.vh)/2;
   const at=(el,fx,fy,r)=>setPiece(el,ox+S.vw*fx-el.offsetWidth/2,oy+S.vh*fy-el.offsetHeight/2,r);
   setPiece($('#board-title'),ox+S.vw*(c?.05:.04),oy+(c?(k==='l'?76:84):Math.max(86,S.vh*.12)),-2);
-  /* [x, y, giro] como fracción de la pantalla, en el orden de las tarjetas: Rubbish, Whispers, Clashing, Dash&Dine, Drowned */
+  /* [x, y, giro] como fracción de la pantalla, en el orden de las tarjetas: Rubbish, Whispers, Clashing, Dash&Dine, Drowned, Barquillos */
+  const tn=k==='l'&&$('#board-title').offsetWidth+3*$('.project-card').offsetWidth+S.vw*.05+45>S.vw;   /* si no caben tres tarjetas junto al titulo, se usa el reparto del ordenador */
   const P={
-    m:[[.27,.42,-3],[.74,.36,2.5],[.27,.66,2],[.74,.61,-2.5],[.74,.86,3]],   /* móvil vertical: dos columnas escalonadas */
-    l:[[.32,.76,-3],[.62,.38,2.5],[.57,.77,2],[.86,.39,-2.5],[.82,.76,3]],   /* móvil horizontal: dos filas */
-    d:[[.22,.62,-3],[.50,.45,2.5],[.76,.30,-2],[.50,.80,3],[.80,.68,-4]]     /* ordenador */
-  }[k];
-  layerBoard.querySelectorAll('.project-card').forEach((el,i)=>at(el,...P[i]));
+    m:[[.27,.42,-3],[.74,.36,2.5],[.27,.625,2],[.74,.61,-2.5],[.74,.86,3],[.27,.81,-2]],   /* móvil vertical: dos columnas escalonadas */
+    l:[[.49,.34,-3],[.69,.36,2.5],[.88,.33,-2],[.17,.70,2.5],[.83,.72,3],[.50,.70,-2.5]],
+    n:[[.15,.52,-3],[.47,.36,2.5],[.80,.34,-2],[.30,.80,2.5],[.86,.76,3],[.58,.80,-2.5]],   /* movil horizontal estrecho: como el ordenador */  /* móvil horizontal: dos filas */
+    s:[[.62,.37,-3],[.86,.38,2.5],[.15,.70,-2],[.39,.70,2.5],[.87,.70,3],[.63,.70,-2.5]],   /* movil horizontal diminuto: dos arriba y cuatro abajo, en orden de lectura */
+    d:[[.24,.47,-3],[.55,.36,2.5],[.82,.28,-2],[.15,.80,2.5],[.82,.72,-4],[.50,.79,3]]     /* ordenador */
+  }[k==='l'&&S.vw<640?'s':k==='l'&&tn?'n':k];
+  /* reparto: si las posiciones de arriba ya dejan aire entre tarjetas, titulo y botones, se quedan tal cual; si no (segun la resolucion),
+     se separan lo justo hasta que ninguna tape el titulo, los botones ni a otra tarjeta */
+  const cards=[...layerBoard.querySelectorAll('.project-card')],vw=S.vw,vh=S.vh,tt=$('#board-title'),pb=$('#pan-button'),mg=clamp(vw*.03,16,36);
+  const tw=tt.offsetWidth,th=tt.offsetHeight,tx=tt._p.x-ox,ty=tt._p.y-oy;
+  const obs=[[0,0,vw,66],[tx-12,ty-12,tx+tw+12,ty+th+12]];
+  if(pb&&getComputedStyle(pb).display!=='none')obs.push([0,vh-72,152,vh]);
+  obs.push([vw-mg-62,vh-mg-62,vw,vh]);
+  const sets=[obs,obs.slice(0,-1),obs.slice(0,2)];   /* si no cabe todo, se renuncia primero al boton de subir y luego al de mover */
+  const W=cards.map(el=>el.offsetWidth+16),H=cards.map(el=>el.offsetHeight+16),pad=Math.max(10,vw*.012),Go=10;
+  const gp=(X,Y,i,j)=>Math.max(Math.abs(X[i]-X[j])-(W[i]+W[j])/2,Math.abs(Y[i]-Y[j])-(H[i]+H[j])/2);
+  const go=(X,Y,i,r)=>[Math.max(r[0]-X[i]-W[i]/2,X[i]-W[i]/2-r[2]),Math.max(r[1]-Y[i]-H[i]/2,Y[i]-H[i]/2-r[3])];
+  const met=(X,Y,ob)=>{let mp=1e9,mo=1e9;
+    for(let i=0;i<6;i++){for(const r of ob){const d=go(X,Y,i,r);mo=Math.min(mo,Math.max(d[0],d[1]));}
+      for(let j=i+1;j<6;j++)mp=Math.min(mp,gp(X,Y,i,j));}
+    return [mp,mo];};
+  const sol=(G,ext,ob)=>{
+    const X=P.map(p=>vw*p[0]),Y=P.map(p=>vh*p[1]),X0=X.slice(),Y0=Y.slice();
+    for(let it=0;it<700;it++){
+      const sp=it<400?.02:0;
+      for(let i=0;i<6;i++){
+        X[i]+=(X0[i]-X[i])*sp;Y[i]+=(Y0[i]-Y[i])*sp;
+        for(const r of ob){const d=go(X,Y,i,r);
+          if(Math.max(d[0],d[1])<Go){
+            if(d[0]>=d[1])X[i]+=(X[i]<(r[0]+r[2])/2?-1:1)*(Go-d[0]);else Y[i]+=(Y[i]<(r[1]+r[3])/2?-1:1)*(Go-d[1]);}}
+      }
+      for(let i=0;i<6;i++)for(let j=i+1;j<6;j++){
+        const dx=Math.abs(X[i]-X[j])-(W[i]+W[j])/2,dy=Math.abs(Y[i]-Y[j])-(H[i]+H[j])/2;
+        if(Math.max(dx,dy)<G){
+          if(dx>=dy){const s=X[i]<X[j]?-1:1,n=(G-dx)/2;X[i]+=s*n;X[j]-=s*n;}
+          else{const s=Y[i]<Y[j]?-1:1,n=(G-dy)/2;Y[i]+=s*n;Y[j]-=s*n;}}}
+      for(let i=0;i<6;i++){X[i]=clamp(X[i],W[i]/2+pad,vw-W[i]/2-pad);Y[i]=clamp(Y[i],66+H[i]/2+6,vh+ext-H[i]/2-pad);}
+    }
+    const m=met(X,Y,ob);
+    return {X,Y,ok:m[0]>=G-2&&m[1]>=Go-4,q:Math.min(m[0],m[1]+8)-(ob.length<obs.length?2:0)};
+  };
+  let res={X:P.map(p=>vw*p[0]),Y:P.map(p=>vh*p[1])},best;
+  const m0=met(res.X,res.Y,obs);
+  if(m0[0]<10||m0[1]<Go){
+    find:for(const ob of sets)for(const ext of [0,vh*.25])
+      for(const g of [.3,.24,.18,.13,.09,.05,.02]){res=sol(g*Math.min(...W),ext,ob);if(!best||res.q>best.q)best=res;if(res.ok)break find;}
+    if(!res.ok)res=best;
+  }
+  cards.forEach((el,i)=>setPiece(el,ox+res.X[i]-el.offsetWidth/2,oy+res.Y[i]-el.offsetHeight/2,P[i][2]));
   return {x:-ox,y:-oy};
 }
 

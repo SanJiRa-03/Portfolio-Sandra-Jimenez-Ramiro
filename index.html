@@ -1,8 +1,6 @@
 <!--
   ════════════════════════════════════════════════════════════════
   PORTFOLIO DE SANDRA JIMÉNEZ RAMIRO
-  index.html: estructura y contenido de la página (una sola página).
-  El aspecto está en style.css y la interactividad en script.js.
   ════════════════════════════════════════════════════════════════
 -->
 <!doctype html>
@@ -41,7 +39,7 @@
 <header class="topbar">
   <!-- Logo: plumbob + "SJ®". Al pulsarlo vuelve al principio de la página -->
   <a class="brand" href="#top" aria-label="Sandra Jiménez, volver arriba"><svg class="brand-pb" viewBox="13 2 38 60" aria-hidden="true"><polygon points="32,3 14,33 32,35" fill="#FF8DC6"/><polygon points="32,3 50,33 32,35" fill="#F0509A"/><polygon points="14,33 32,61 32,35" fill="#E03B8C"/><polygon points="50,33 32,61 32,35" fill="#B81F6A"/></svg><b>SJ<span>®</span></b></a>
-  <!-- Botón para descargar el CV (el PDF está en assets/cv/) -->
+  <!-- Botón para descargar el CV -->
   <a class="cv-button cv-nav" href="assets/cv/CV_Sandra_Jimenez_Ramiro.pdf" download="CV_Sandra_Jimenez_Ramiro.pdf"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="M7 11l5 5 5-5"/><path d="M5 20h14"/></svg>DESCARGAR CV</a>
 </header>
 
@@ -60,7 +58,7 @@
     </div>
 
 
-    <!-- Foto de Sandra con el plumbob 3D que gira encima (las caras del plumbob las crea script.js) -->
+    <!-- Foto con el plumbob 3D que gira encima (las caras del plumbob las crea script.js) -->
     <div class="me-stage">
       <img draggable="false" src="assets/me-hero.webp" alt="Sandra Jiménez Ramiro" width="439" height="568" fetchpriority="high">
       <div class="pb-wrap" aria-hidden="true"><i class="pb-glow"></i><i class="sp sp1"></i><i class="sp sp2"></i><i class="sp sp3"></i><div class="pb-scene"><div class="plumbob" id="plumbob"></div></div></div>
@@ -157,8 +155,6 @@
     </div>
   </section>
 
-
-
   <!-- ═════════ PROYECTOS: tablero de corcho interactivo ═════════
        Las tarjetas se pueden arrastrar; al pulsar una se abre su ficha (notas, fotos, tráiler y botón de jugar).
        Los datos de cada proyecto están en PROJECTS, al principio de script.js. -->
@@ -252,6 +248,22 @@
             <i class="pin"></i>
           </div>
         </article>
+
+        <!-- Tarjeta: Cooking Barquillos In Madrid (game jam, próximamente). La portada se pone desde script.js.
+             La pegatina rosa "Game jam" solo marca el tipo de proyecto: no recibe clics -->
+        <article class="piece project-card" data-project="barquillos" tabindex="0" role="button" aria-label="Cooking Barquillos In Madrid, game jam, 2026. Abrir proyecto">
+          <div class="piece-inner">
+            <div class="project-cover cover-barquillos">
+              <svg class="cover-glyph" aria-hidden="true"><use href="#i-image"/></svg>
+              <div class="cover-overlay">
+                <h3>Cooking Barquillos<br>In Madrid</h3>
+                <span>2026</span><em>Próximamente</em>
+              </div>
+            </div>
+            <span class="jam-tag"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2c.6 5.4 4.6 9.4 10 10-5.4.6-9.4 4.6-10 10-.6-5.4-4.6-9.4-10-10 5.4-.6 9.4-4.6 10-10z"/></svg>Game jam</span>
+            <i class="pin"></i>
+          </div>
+        </article>
         </div>
 
         <!-- Capa 2: la ficha del proyecto abierto (script.js la rellena al pulsar una tarjeta) -->
@@ -261,8 +273,6 @@
       <div class="note-zoom" id="note-zoom" hidden><div class="nz-card" role="dialog" aria-modal="true" aria-label="Nota ampliada"><button class="nz-x" type="button" aria-label="Cerrar la nota">×</button><div class="nz-body"></div></div></div>
     </div>
   </section>
-
-
 
   <section id="about" class="about-section">
     <!-- ═════════ SOBRE MÍ: la nevera ═════════ -->
@@ -295,7 +305,6 @@
       <div class="why" id="why" aria-live="polite"><h4>Pulsa una pegatina</h4><p>y descubre por qué me gusta.</p><i class="pin"></i></div>
     </div>
   </section>
-
 
   <!-- ═════════ CONTACTO: cinta "CONTÁCTAME", título, teléfono que suena y enlaces ═════════ -->
   <section id="contact" class="contact-section">

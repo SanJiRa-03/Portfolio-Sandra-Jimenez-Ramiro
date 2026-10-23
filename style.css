@@ -730,9 +730,9 @@ a,button,[role="button"]{-webkit-tap-highlight-color:transparent}
 @media(min-width:600px) and (max-width:900px) and (orientation:portrait){.me-stage{--mh:min(44vh,500px)}}
 /* ═════════ TABLERO EN ORDENADOR: tarjetas y cartel que se adaptan al tamaño de la pantalla ═════════ */
 @media(min-width:901px) and (min-height:561px){
-  .project-card{width:clamp(230px,min(21vw,calc(30vh*1.45)),380px);height:auto;aspect-ratio:380/262}
+  .project-card{width:clamp(180px,min(21vw,calc(30vh*1.45),calc((100vh - 280px)*.72)),380px);height:auto;aspect-ratio:380/262}
   .board-title h2{font-size:clamp(56px,5.4vw,96px)}
-  .work-section{min-height:640px}
+  .work-section{min-height:540px}
 }
 /* Galleta: el papelito nunca hace que las mitades se salgan de la pantalla */
 .fortune-box{--sw:min(calc(100vw - var(--ch)*2.4),620px)}
@@ -756,3 +756,17 @@ a,button,[role="button"]{-webkit-tap-highlight-color:transparent}
 .note-more:hover{text-decoration:underline}
 .note-more:focus-visible{outline:2px solid #111;outline-offset:3px}
 @media(max-width:900px),(max-height:560px){.note-more{font-size:15px;padding:6px 0}}
+
+/* ═════════ GAME JAM: pegatina rosa en la esquina de la tarjeta ═════════ */
+/* Marca los proyectos hechos en una game jam. Va pegada a la esquina del marco de la foto, siempre visible y sin recibir clics.
+   El tamaño se mide en "em", así que la pegatina crece y encoge con el tamaño de la tarjeta */
+.jam-tag{position:absolute;z-index:3;left:-.9em;top:-.6em;display:inline-flex;align-items:center;gap:.45em;padding:.55em .95em .55em .75em;background:var(--pink);color:#111;font-size:11px;font-weight:800;line-height:1;letter-spacing:.02em;white-space:nowrap;transform:rotate(-7deg);box-shadow:0 .55em .9em -.45em rgba(0,0,0,.5);pointer-events:none}
+.jam-tag svg{display:block;width:1.2em;height:1.2em;flex:none;fill:currentColor}
+@media(min-width:901px) and (min-height:561px){.jam-tag{font-size:clamp(10px,min(.8vw,1.6vh),13px)}}
+@media(max-width:900px) and (orientation:portrait){.jam-tag{font-size:clamp(8.5px,2.3vw,11px)}}
+@media(max-width:900px) and (orientation:landscape),(max-height:560px) and (orientation:landscape){.jam-tag{font-size:clamp(8.5px,min(1.2vw,2.7vh),10.5px)}}
+/* "Cooking Barquillos In Madrid" es un nombre largo: su letra se ajusta al ancho de la tarjeta para que quepa en dos líneas
+   y no choque con la pegatina (ancho útil = ancho de la tarjeta menos marco y márgenes; el texto mide unas 8,3 veces la letra) */
+@media(min-width:901px) and (min-height:561px){.cover-barquillos .cover-overlay h3{font-size:max(14px,calc((clamp(180px,min(21vw,calc(30vh*1.45),calc((100vh - 280px)*.72)),380px) - 64px)/8.6))}}
+@media(max-width:900px) and (orientation:portrait){.cover-barquillos .cover-overlay h3{font-size:clamp(8.5px,calc((min(42vw,250px) - 32px)/8.6),22px)}}
+@media(max-width:900px) and (orientation:landscape),(max-height:560px) and (orientation:landscape){.cover-barquillos .cover-overlay h3{font-size:clamp(8.5px,calc((min(19vw,calc(28vh*1.45)) - 32px)/8.6),15px)}}
