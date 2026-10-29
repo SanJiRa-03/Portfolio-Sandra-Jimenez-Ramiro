@@ -306,7 +306,7 @@
     </div>
   </section>
 
-  <!-- ═════════ CONTACTO: cinta "CONTÁCTAME", título, teléfono que suena y enlaces ═════════ -->
+  <!-- ═════════ CONTACTO: cinta "CONTÁCTAME", título, avión de papel y enlaces ═════════ -->
   <section id="contact" class="contact-section">
     <!-- Cinta de texto que se desplaza sin parar (el texto va dos veces para que el bucle no tenga saltos) -->
     <div class="marquee">
@@ -318,13 +318,15 @@
       <div>
         <h2>¿Creamos algo<br><span>juntos?</span></h2>                
       </div>
-      <!-- Columna derecha: teléfono antiguo (al pulsarlo abre el correo) y enlaces -->
+      <!-- Columna derecha: avión de papel (al pulsarlo despega y da una vuelta por toda la sección) y enlaces -->
       <div class="contact-side">
-        <a class="phone" href="mailto:sandra.jimenezramiro@gmail.com" aria-label="Contesta la llamada: envíame un correo">
-        <span class="rings" aria-hidden="true"><i style="--i:0"></i><i style="--i:1"></i><i style="--i:2"></i></span>
-        <span class="ring-txt ring-a" aria-hidden="true">¡ring!</span><span class="ring-txt ring-b" aria-hidden="true">¡ring!</span>
-        <span class="phone-body"><img draggable="false" src="assets/phone-pink.png" alt=""></span>
-      </a>
+        <div class="plane-box">
+          <button class="plane" id="plane" type="button" aria-label="Lanzar el avión de papel">
+            <span class="rings" aria-hidden="true"><i style="--i:0"></i><i style="--i:1"></i><i style="--i:2"></i></span>
+            <span class="ring-txt ring-a" aria-hidden="true">¡despega!</span>
+            <img class="plane-img" src="assets/plane.png" alt="" width="720" height="402" draggable="false">
+          </button>
+        </div>
         <!-- Enlaces de contacto -->
         <div class="contact-links">
         <a href="mailto:sandra.jimenezramiro@gmail.com">CORREO <span>↗</span></a>

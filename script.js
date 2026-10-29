@@ -636,7 +636,8 @@ const FORTUNES=[
     const safe=t.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
     const half='<span>'+Array.from({length:4},()=>`<b>${safe}</b><i>✦</i>`).join('')+'</span>';
     track.innerHTML=half+half;
-    track.style.setProperty('--dur',Math.max(10,t.length*.55)+'s');
+    const w=track.firstElementChild.offsetWidth;   /* velocidad constante (unos 200 px por segundo) sea cual sea la longitud de la frase */
+    track.style.setProperty('--dur',(w?Math.max(8,w/200):Math.max(10,t.length*.55))+'s');
   };
   /* Abre la galleta: si ya estaba abierta, primero se cierra y luego se abre con otra frase */
   const crack=()=>{
@@ -646,10 +647,11 @@ const FORTUNES=[
     if(ck.classList.contains('is-cracked')){ck.classList.remove('is-cracked');setTimeout(go,reduce?0:480);}else go();
   };
   /* Al coger la galleta de la nevera se abre la ventana; también se cierra con la X o pulsando fuera */
-  take.addEventListener('click',()=>{ck.classList.remove('is-cracked');txt.textContent='';track.innerHTML='';dlg.showModal();setTimeout(crack,reduce?0:350);});
+  take.addEventListener('click',()=>{ck.classList.remove('is-cracked');txt.textContent='';track.innerHTML='';dlg.showModal();document.documentElement.classList.add('fb-open');setTimeout(crack,reduce?0:350);});
   ck.addEventListener('click',crack);
   document.getElementById('fb-again').addEventListener('click',crack);
   document.getElementById('fb-close').addEventListener('click',()=>dlg.close());
+  dlg.addEventListener('close',()=>document.documentElement.classList.remove('fb-open'));
   dlg.addEventListener('click',e=>{if(e.target===dlg)dlg.close();});
 })();
 
@@ -716,4 +718,97 @@ const FORTUNES=[
   f.addEventListener('keydown',e=>{if(e.key==='Escape'&&open)setOpen(false);});
   /* Al pulsar el cubito, el bug intenta escaparse */
   bugs.forEach(b=>b.addEventListener('click',()=>{b.classList.remove('is-shaking');void b.offsetWidth;b.classList.add('is-shaking');}));
+})();
+
+/* ═════════ CONTACTO: avión de papel ═════════
+   Al pulsarlo se echa hacia atrás, despega, hace un rizo y da la vuelta a toda la sección inclinándose en las curvas
+   (con su sombra, que se separa del suelo al subir, y una estela que se desvanece) y aterriza donde estaba. */
+(function(){
+  const btn=document.getElementById('plane'),sec=document.getElementById('contact');
+  if(!btn||!sec)return;
+  const img=btn.querySelector('.plane-img'),RATIO=402/720,REST=-14,PI=Math.PI;
+  let busy=false;
+  const lerp=(a,b,t)=>a+(b-a)*t,sst=t=>t<=0?0:t>=1?1:t*t*(3-2*t),lim=(v,a,b)=>Math.min(b,Math.max(a,v));
+  /* curva suave que pasa por todos los puntos (Catmull-Rom) */
+  const cr=(a,b,c,d,t)=>{const t2=t*t,t3=t2*t;return [0,1].map(k=>.5*((2*b[k])+(-a[k]+c[k])*t+(2*a[k]-5*b[k]+4*c[k]-d[k])*t2+(-a[k]+3*b[k]-3*c[k]+d[k])*t3));};
+  const spline=(w,out)=>{const e=[w[0],...w,w[w.length-1]];for(let i=1;i<e.length-2;i++)for(let k=0;k<26;k++)out.push(cr(e[i-1],e[i],e[i+1],e[i+2],k/26));};
+  /* velocidad: arranca con calma, cruza rapido y frena al aterrizar. F(u) = parte del recorrido hecha en el instante u (0 a 1) */
+  const F=(()=>{const n=400,t=[0];let s=0;for(let i=1;i<=n;i++){const u=i/n;s+=.1+.9*sst(u/.22)*(1-sst((u-.78)/.22));t.push(s);}return u=>{const x=lim(u,0,1)*n,i=Math.min(n-1,Math.floor(x));return (t[i]+(t[i+1]-t[i])*(x-i))/s;};})();
+  /* Recorrido solo por la parte blanca (por debajo del letrero CONTÁCTAME): curvas amplias en S, con dos rizos suaves, sin pegarse a las esquinas */
+  const path=(sx,sy,W,H,size,top)=>{
+    const m=Math.max(size*.95,42),L=m,R=W-m,T=top,B=H-m,Hw=Math.max(B-T,60),r=Math.min(W,Hw)*.1,c=r*.6,by=Math.max(B-sy,40);
+    const X=f=>L+f*(R-L),Y=f=>T+f*(B-T),ctr=[(L+R)/2,(T+B)/2],f2=lim((sx-L)/(R-L)-.34,.16,.5);
+    /* [x, y, rizo] */
+    const wp=[[sx,sy],[X(.9),Y(.2)],[X(.72),Y(.08)],[X(.52),Y(.2),1],[X(.27),Y(.36)],[X(.1),Y(.58)],[X(.17),Y(.8)],[X(f2),Y(.9),1],[X(f2+.16),Y(.86)],[sx-W*.1,sy+by*.5],[sx-W*.04,sy+by*.18],[sx,sy]];
+    const p=[];let acc=[];
+    const flush=()=>{if(acc.length>1)spline(acc,p);acc=[];};
+    for(let i=0;i<wp.length;i++){
+      const w=wp[i];
+      if(!w[2]){acc.push([w[0],w[1]]);continue;}
+      /* rizo: sigue la direccion del vuelo en ese punto y se curva hacia el centro de la zona */
+      const a=wp[i-1],b=wp[i+1],dx=b[0]-a[0],dy=b[1]-a[1],dl=Math.hypot(dx,dy)||1,d=[dx/dl,dy/dl],n=[-d[1],d[0]];
+      const apex=k=>Math.hypot(w[0]+n[0]*k*r*2-ctr[0],w[1]+n[1]*k*r*2-ctr[1]),sd=apex(1)<apex(-1)?1:-1,e=c*PI,g=e+r*1.6;
+      acc.push([w[0]-d[0]*g,w[1]-d[1]*g],[w[0]-d[0]*e,w[1]-d[1]*e]);flush();
+      for(let k=0;k<=90;k++){const t=-PI+2*PI*k/90,u=c*t-r*Math.sin(t),v=r*(1+Math.cos(t))*sd;p.push([w[0]+d[0]*u+n[0]*v,w[1]+d[1]*u+n[1]*v]);}
+      acc.push([w[0]+d[0]*e,w[1]+d[1]*e],[w[0]+d[0]*g,w[1]+d[1]*g]);
+    }
+    flush();
+    p.forEach(q=>{q[0]=lim(q[0],L,W-L);q[1]=lim(q[1],T-4,H-m*.5);});   /* nunca se sale de la zona blanca */
+    return p;
+  };
+  btn.addEventListener('click',()=>{
+    if(busy)return;busy=true;
+    if(matchMedia('(prefers-reduced-motion:reduce)').matches){btn.classList.add('is-land');setTimeout(()=>{btn.classList.remove('is-land');busy=false;},800);return;}
+    const s=sec.getBoundingClientRect(),r=img.getBoundingClientRect(),W=sec.clientWidth,H=sec.clientHeight;
+    const size=Math.round(parseFloat(getComputedStyle(img).width)),h=size*RATIO,sx=r.left-s.left+r.width/2,sy=r.top-s.top+r.height/2;
+    const mq=document.querySelector('#contact .marquee').getBoundingClientRect(),pts=path(sx,sy,W,H,size,mq.bottom-s.top+size*.5+6),N=pts.length,cum=[0];
+    for(let i=1;i<N;i++)cum.push(cum[i-1]+Math.hypot(pts[i][0]-pts[i-1][0],pts[i][1]-pts[i-1][1]));
+    const total=cum[N-1],dur=lim(total/.55,5400,9500),TA=380;
+    /* rumbo y alabeo en cada punto (el avion se inclina hacia dentro de la curva) */
+    const th=[];for(let i=0;i<N;i++){const a=pts[Math.max(0,i-1)],b=pts[Math.min(N-1,i+1)];let t=Math.atan2(b[1]-a[1],b[0]-a[0]);if(i)while(t-th[i-1]>PI)t-=2*PI;if(i)while(t-th[i-1]<-PI)t+=2*PI;th.push(t);}
+    const kap=th.map((_,i)=>{const a=Math.max(0,i-4),b=Math.min(N-1,i+4);return (th[b]-th[a])/((cum[b]-cum[a])||1);});
+    const roll=kap.map((_,i)=>{let sum=0,n=0;for(let j=Math.max(0,i-12);j<=Math.min(N-1,i+12);j++){sum+=kap[j];n++;}return lim(sum/n*2200,-38,38);});
+    /* como un planeador: sube con esfuerzo (mas despacio) y gana velocidad al bajar */
+    const tau=[0];for(let i=1;i<N;i++)tau.push(tau[i-1]+(cum[i]-cum[i-1])/(1+.3*Math.sin((th[i]+th[i-1])/2)));
+    const tauT=tau[N-1],h0=th[4],rest=REST*PI/180;
+    /* avion que vuela (dentro, la imagen se gira; fuera, la posicion, el tamano y la sombra) y lienzo de la estela */
+    const fly=document.createElement('div'),pic=document.createElement('img'),cv=document.createElement('canvas'),dpr=Math.min(2,window.devicePixelRatio||1);
+    fly.className='plane-fly';fly.style.width=size+'px';fly.style.height=h+'px';pic.src=img.currentSrc||img.src;pic.alt='';pic.draggable=false;fly.appendChild(pic);
+    cv.className='plane-trail';cv.width=W*dpr;cv.height=H*dpr;cv.style.width=W+'px';cv.style.height=H+'px';
+    const cx=cv.getContext('2d');cx.scale(dpr,dpr);
+    sec.append(cv,fly);btn.classList.add('is-flying');
+    const ripple=()=>{const e=document.createElement('span');e.className='plane-ripple';btn.appendChild(e);e.addEventListener('animationend',()=>e.remove());};
+    ripple();
+    const put=(x,y,ang,rl,sc,alt)=>{
+      fly.style.transform='translate('+(x-size/2).toFixed(1)+'px,'+(y-h/2).toFixed(1)+'px) scale('+sc.toFixed(3)+')';
+      fly.style.filter='drop-shadow(0 '+(6+34*alt).toFixed(1)+'px '+(6+16*alt).toFixed(1)+'px rgba(214,70,140,'+(.34-.16*alt).toFixed(2)+'))';
+      pic.style.transform='perspective(560px) rotate('+ang.toFixed(2)+'rad) rotateX('+rl.toFixed(1)+'deg)';
+    };
+    const t0=performance.now();let idx=0;
+    const frame=now=>{
+      const el=now-t0,fl=Math.sin(now*.021)*.03+Math.sin(now*.0057)*.035;   /* aleteo del papel */
+      if(el<TA){   /* se echa hacia atras para coger impulso */
+        const e=1-Math.pow(1-el/TA,3);
+        put(sx-18*e*Math.cos(h0),sy-18*e*Math.sin(h0),rest+(.35*e)+fl*.4,0,1-.1*e,0);
+        requestAnimationFrame(frame);return;
+      }
+      const u=Math.min(1,(el-TA)/dur),tt=F(u)*tauT;
+      while(idx<N-2&&tau[idx+1]<tt)idx++;
+      const f=lim((tt-tau[idx])/((tau[idx+1]-tau[idx])||1),0,1),dist=lerp(cum[idx],cum[idx+1],f);
+      let x=lerp(pts[idx][0],pts[idx+1][0],f),y=lerp(pts[idx][1],pts[idx+1][1],f);
+      const kick=1-sst(u/.14);x-=18*kick*Math.cos(h0);y-=18*kick*Math.sin(h0);   /* el impulso del lanzamiento */
+      let ang=lerp(th[idx],th[idx+1],f);
+      const dA=(t)=>{let d=t-ang;while(d>PI)d-=2*PI;while(d<-PI)d+=2*PI;return d;};
+      ang+=dA(rest)*((1-sst(u/.1))+sst((u-.9)/.1));   /* sale desde su postura de reposo y vuelve a ella al aterrizar */
+      const alt=Math.pow(Math.sin(PI*u),.7),sc=1+.4*alt,rl=lerp(roll[idx],roll[idx+1],f)*(1-sst((u-.88)/.12))*sst(u/.08);
+      put(x,y,ang+fl,rl,sc,alt);
+      /* estela: puntitos que se desvanecen y se hacen mas pequenos hacia atras */
+      cx.clearRect(0,0,W,H);const Lt=Math.min(560,total*.24),d0=Math.max(0,dist-Lt);
+      for(let i=idx;i>=0&&cum[i]>=d0;i-=2){const q=1-(dist-cum[i])/Lt;if(q<=0)break;cx.globalAlpha=Math.pow(q,1.5)*.85;cx.fillStyle='#E57DB5';cx.beginPath();cx.arc(pts[i][0],pts[i][1],.5+2.6*q,0,2*PI);cx.fill();}
+      if(u<1){requestAnimationFrame(frame);return;}
+      fly.remove();cv.remove();btn.classList.remove('is-flying');btn.classList.add('is-land');ripple();
+      setTimeout(()=>{btn.classList.remove('is-land');busy=false;},850);
+    };
+    requestAnimationFrame(frame);
+  });
 })();
