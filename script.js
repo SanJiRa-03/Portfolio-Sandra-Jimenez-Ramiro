@@ -734,12 +734,13 @@ const FORTUNES=[
   const spline=(w,out)=>{const e=[w[0],...w,w[w.length-1]];for(let i=1;i<e.length-2;i++)for(let k=0;k<26;k++)out.push(cr(e[i-1],e[i],e[i+1],e[i+2],k/26));};
   /* velocidad: arranca con calma, cruza rapido y frena al aterrizar. F(u) = parte del recorrido hecha en el instante u (0 a 1) */
   const F=(()=>{const n=400,t=[0];let s=0;for(let i=1;i<=n;i++){const u=i/n;s+=.1+.9*sst(u/.22)*(1-sst((u-.78)/.22));t.push(s);}return u=>{const x=lim(u,0,1)*n,i=Math.min(n-1,Math.floor(x));return (t[i]+(t[i+1]-t[i])*(x-i))/s;};})();
-  /* Recorrido solo por la parte blanca (por debajo del letrero CONTÁCTAME): curvas amplias en S, con dos rizos suaves, sin pegarse a las esquinas */
-  const path=(sx,sy,W,H,size,top)=>{
-    const m=Math.max(size*.95,42),L=m,R=W-m,T=top,B=H-m,Hw=Math.max(B-T,60),r=Math.min(W,Hw)*.1,c=r*.6,by=Math.max(B-sy,40);
-    const X=f=>L+f*(R-L),Y=f=>T+f*(B-T),ctr=[(L+R)/2,(T+B)/2],f2=lim((sx-L)/(R-L)-.34,.16,.5);
+  /* Recorrido solo por la parte blanca visible (por debajo del letrero CONTÁCTAME): curvas amplias en S y, si hay sitio, dos rizos suaves.
+     Todo se mide con el tamaño del avión en vuelo, para que en pantallas pequeñas no se vuelva loco. */
+  const path=(sx,sy,L,R,T,B,fs)=>{
+    const Hw=B-T,r=Math.max(fs*.7,Math.min(R-L,Hw)*.1),c=r*.6,loops=Hw>r*5.2&&R-L>r*7,by=Math.max(B-sy,fs*.6);
+    const X=f=>L+f*(R-L),Y=f=>T+f*(B-T),ctr=[(L+R)/2,(T+B)/2],f2=lim((sx-L)/(R-L)-.34,.16,.5),lp=loops?1:0;
     /* [x, y, rizo] */
-    const wp=[[sx,sy],[X(.9),Y(.2)],[X(.72),Y(.08)],[X(.52),Y(.2),1],[X(.27),Y(.36)],[X(.1),Y(.58)],[X(.17),Y(.8)],[X(f2),Y(.9),1],[X(f2+.16),Y(.86)],[sx-W*.1,sy+by*.5],[sx-W*.04,sy+by*.18],[sx,sy]];
+    const wp=[[sx,sy],[X(.9),Y(.2)],[X(.72),Y(.08)],[X(.52),Y(.2),lp],[X(.27),Y(.36)],[X(.1),Y(.58)],[X(.17),Y(.8)],[X(f2),Y(.9),lp],[X(f2+.16),Y(.86)],[sx-(R-L)*.1,sy+by*.5],[sx-(R-L)*.04,sy+by*.18],[sx,sy]];
     const p=[];let acc=[];
     const flush=()=>{if(acc.length>1)spline(acc,p);acc=[];};
     for(let i=0;i<wp.length;i++){
@@ -753,43 +754,58 @@ const FORTUNES=[
       acc.push([w[0]+d[0]*e,w[1]+d[1]*e],[w[0]+d[0]*g,w[1]+d[1]*g]);
     }
     flush();
-    p.forEach(q=>{q[0]=lim(q[0],L,W-L);q[1]=lim(q[1],T-4,H-m*.5);});   /* nunca se sale de la zona blanca */
+    p.forEach(q=>{q[0]=lim(q[0],L,R);q[1]=lim(q[1],T,B);});   /* nunca se sale de la zona */
     return p;
   };
   btn.addEventListener('click',()=>{
     if(busy)return;busy=true;
     if(matchMedia('(prefers-reduced-motion:reduce)').matches){btn.classList.add('is-land');setTimeout(()=>{btn.classList.remove('is-land');busy=false;},800);return;}
-    const s=sec.getBoundingClientRect(),r=img.getBoundingClientRect(),W=sec.clientWidth,H=sec.clientHeight;
-    const size=Math.round(parseFloat(getComputedStyle(img).width)),h=size*RATIO,sx=r.left-s.left+r.width/2,sy=r.top-s.top+r.height/2;
-    const mq=document.querySelector('#contact .marquee').getBoundingClientRect(),pts=path(sx,sy,W,H,size,mq.bottom-s.top+size*.5+6),N=pts.length,cum=[0];
+    const s=sec.getBoundingClientRect(),r=img.getBoundingClientRect(),W=sec.clientWidth,H=sec.clientHeight,vh=window.innerHeight,vw0=window.innerWidth;
+    const size0=Math.round(parseFloat(getComputedStyle(img).width)),sx=r.left-s.left+r.width/2,sy=r.top-s.top+r.height/2;
+    /* en pantallas pequeñas vuela más pequeño (y vuelve a su tamaño al aterrizar) */
+    const fs=Math.round(lim(Math.min(size0,W*.17,vh*.2),52,size0)),h=fs*RATIO,k0=size0/fs,m=Math.max(fs*.8,30);
+    /* zona de vuelo: la parte blanca que se ve en pantalla; si es demasiado pequeña, toda la parte blanca */
+    const mq=document.querySelector('#contact .marquee').getBoundingClientRect(),topMin=mq.bottom-s.top+fs*.55+6;
+    let T=Math.max(topMin,-s.top+fs*.6),B=Math.min(H-m,vh-s.top-fs*.6);
+    if(B-T<fs*2.6){T=topMin;B=H-m;}
+    const pts=path(sx,sy,m,W-m,T,B,fs),N=pts.length,cum=[0];
     for(let i=1;i<N;i++)cum.push(cum[i-1]+Math.hypot(pts[i][0]-pts[i-1][0],pts[i][1]-pts[i-1][1]));
     const total=cum[N-1],dur=lim(total/.55,5400,9500),TA=380;
     /* rumbo y alabeo en cada punto (el avion se inclina hacia dentro de la curva) */
     const th=[];for(let i=0;i<N;i++){const a=pts[Math.max(0,i-1)],b=pts[Math.min(N-1,i+1)];let t=Math.atan2(b[1]-a[1],b[0]-a[0]);if(i)while(t-th[i-1]>PI)t-=2*PI;if(i)while(t-th[i-1]<-PI)t+=2*PI;th.push(t);}
     const kap=th.map((_,i)=>{const a=Math.max(0,i-4),b=Math.min(N-1,i+4);return (th[b]-th[a])/((cum[b]-cum[a])||1);});
-    const roll=kap.map((_,i)=>{let sum=0,n=0;for(let j=Math.max(0,i-12);j<=Math.min(N-1,i+12);j++){sum+=kap[j];n++;}return lim(sum/n*2200,-38,38);});
+    const roll=kap.map((_,i)=>{let sum=0,n=0;for(let j=Math.max(0,i-12);j<=Math.min(N-1,i+12);j++){sum+=kap[j];n++;}return lim(sum/n*fs*16,-38,38);});
     /* como un planeador: sube con esfuerzo (mas despacio) y gana velocidad al bajar */
     const tau=[0];for(let i=1;i<N;i++)tau.push(tau[i-1]+(cum[i]-cum[i-1])/(1+.3*Math.sin((th[i]+th[i-1])/2)));
     const tauT=tau[N-1],h0=th[4],rest=REST*PI/180;
-    /* avion que vuela (dentro, la imagen se gira; fuera, la posicion, el tamano y la sombra) y lienzo de la estela */
-    const fly=document.createElement('div'),pic=document.createElement('img'),cv=document.createElement('canvas'),dpr=Math.min(2,window.devicePixelRatio||1);
-    fly.className='plane-fly';fly.style.width=size+'px';fly.style.height=h+'px';pic.src=img.currentSrc||img.src;pic.alt='';pic.draggable=false;fly.appendChild(pic);
-    cv.className='plane-trail';cv.width=W*dpr;cv.height=H*dpr;cv.style.width=W+'px';cv.style.height=H+'px';
-    const cx=cv.getContext('2d');cx.scale(dpr,dpr);
-    sec.append(cv,fly);btn.classList.add('is-flying');
+    /* avion que vuela (dentro, la imagen se gira; fuera, la posicion y el tamano), su sombra en el suelo y el lienzo de la estela */
+    const fly=document.createElement('div'),pic=document.createElement('img'),sh=document.createElement('div'),cv=document.createElement('canvas');
+    const q=Math.max(.5,Math.min(window.devicePixelRatio||1,1400/Math.max(W,H),2));
+    fly.className='plane-fly';fly.style.width=fs+'px';fly.style.height=h+'px';pic.src=img.currentSrc||img.src;pic.alt='';pic.draggable=false;fly.appendChild(pic);
+    sh.className='plane-shadow';sh.style.width=fs*.9+'px';sh.style.height=fs*.2+'px';
+    cv.className='plane-trail';cv.width=Math.round(W*q);cv.height=Math.round(H*q);cv.style.width=W+'px';cv.style.height=H+'px';
+    const cx=cv.getContext('2d');cx.scale(q,q);
+    sec.append(cv,sh,fly);btn.classList.add('is-flying');
     const ripple=()=>{const e=document.createElement('span');e.className='plane-ripple';btn.appendChild(e);e.addEventListener('animationend',()=>e.remove());};
     ripple();
     const put=(x,y,ang,rl,sc,alt)=>{
-      fly.style.transform='translate('+(x-size/2).toFixed(1)+'px,'+(y-h/2).toFixed(1)+'px) scale('+sc.toFixed(3)+')';
-      fly.style.filter='drop-shadow(0 '+(6+34*alt).toFixed(1)+'px '+(6+16*alt).toFixed(1)+'px rgba(214,70,140,'+(.34-.16*alt).toFixed(2)+'))';
-      pic.style.transform='perspective(560px) rotate('+ang.toFixed(2)+'rad) rotateX('+rl.toFixed(1)+'deg)';
+      fly.style.transform='translate('+(x-fs/2).toFixed(1)+'px,'+(y-h/2).toFixed(1)+'px) scale('+sc.toFixed(3)+')';
+      pic.style.transform='rotate('+ang.toFixed(3)+'rad) scaleY('+Math.cos(rl*PI/180).toFixed(3)+')';   /* inclinarse = aplastarse un poco (sin 3D, para que se vea igual en todos los navegadores) */
+      sh.style.transform='translate('+(x-fs*.45).toFixed(1)+'px,'+(y+fs*(.32+.7*alt)*sc-fs*.1).toFixed(1)+'px) scale('+(sc*(.9+.4*alt)).toFixed(3)+')';
+      sh.style.opacity=(.55-.3*alt).toFixed(2);
     };
-    const t0=performance.now();let idx=0;
-    const frame=now=>{
-      const el=now-t0,fl=Math.sin(now*.021)*.03+Math.sin(now*.0057)*.035;   /* aleteo del papel */
+    /* reloj propio: si el movil se queda un momento sin respirar, la animacion no pega un salto */
+    let el=0,last=performance.now(),idx=0,done=false;
+    const end=()=>{if(done)return;done=true;window.removeEventListener('resize',onResize);fly.remove();sh.remove();cv.remove();btn.classList.remove('is-flying');btn.classList.add('is-land');ripple();setTimeout(()=>{btn.classList.remove('is-land');busy=false;},850);};
+    const onResize=()=>{if(window.innerWidth!==vw0)end();};   /* si giras el movil o cambias el tamano de la ventana, aterriza sin mas */
+    window.addEventListener('resize',onResize);
+    const frame=()=>{
+      if(done)return;
+      const t=performance.now();el+=Math.min(t-last,50);last=t;
+      const fl=Math.sin(el*.021)*.03+Math.sin(el*.0057)*.035;   /* aleteo del papel */
       if(el<TA){   /* se echa hacia atras para coger impulso */
         const e=1-Math.pow(1-el/TA,3);
-        put(sx-18*e*Math.cos(h0),sy-18*e*Math.sin(h0),rest+(.35*e)+fl*.4,0,1-.1*e,0);
+        put(sx-18*e*Math.cos(h0),sy-18*e*Math.sin(h0),rest+(.35*e)+fl*.4,0,k0*(1-.1*e),0);
         requestAnimationFrame(frame);return;
       }
       const u=Math.min(1,(el-TA)/dur),tt=F(u)*tauT;
@@ -800,14 +816,14 @@ const FORTUNES=[
       let ang=lerp(th[idx],th[idx+1],f);
       const dA=(t)=>{let d=t-ang;while(d>PI)d-=2*PI;while(d<-PI)d+=2*PI;return d;};
       ang+=dA(rest)*((1-sst(u/.1))+sst((u-.9)/.1));   /* sale desde su postura de reposo y vuelve a ella al aterrizar */
-      const alt=Math.pow(Math.sin(PI*u),.7),sc=1+.4*alt,rl=lerp(roll[idx],roll[idx+1],f)*(1-sst((u-.88)/.12))*sst(u/.08);
+      const alt=Math.pow(Math.sin(PI*u),.7),big=1-sst(u/.16)*(1-sst((u-.84)/.16)),sc=(1+(k0-1)*big)*(1+.3*alt);
+      const rl=lerp(roll[idx],roll[idx+1],f)*(1-sst((u-.88)/.12))*sst(u/.08);
       put(x,y,ang+fl,rl,sc,alt);
       /* estela: puntitos que se desvanecen y se hacen mas pequenos hacia atras */
-      cx.clearRect(0,0,W,H);const Lt=Math.min(560,total*.24),d0=Math.max(0,dist-Lt);
-      for(let i=idx;i>=0&&cum[i]>=d0;i-=2){const q=1-(dist-cum[i])/Lt;if(q<=0)break;cx.globalAlpha=Math.pow(q,1.5)*.85;cx.fillStyle='#E57DB5';cx.beginPath();cx.arc(pts[i][0],pts[i][1],.5+2.6*q,0,2*PI);cx.fill();}
+      cx.clearRect(0,0,W,H);const Lt=Math.min(560,total*.24),d0=Math.max(0,dist-Lt),dot=Math.max(.6,fs/60);
+      for(let i=idx;i>=0&&cum[i]>=d0;i-=2){const a=1-(dist-cum[i])/Lt;if(a<=0)break;cx.globalAlpha=Math.pow(a,1.5)*.85;cx.fillStyle='#E57DB5';cx.beginPath();cx.arc(pts[i][0],pts[i][1],(.5+2.6*a)*dot,0,2*PI);cx.fill();}
       if(u<1){requestAnimationFrame(frame);return;}
-      fly.remove();cv.remove();btn.classList.remove('is-flying');btn.classList.add('is-land');ripple();
-      setTimeout(()=>{btn.classList.remove('is-land');busy=false;},850);
+      end();
     };
     requestAnimationFrame(frame);
   });
