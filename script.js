@@ -98,8 +98,14 @@ const PROJECTS={
             cover:'assets/projects/dashdine/cover.jpg',images:['assets/projects/dashdine/shot-1.jpg','assets/projects/dashdine/shot-2.jpg'],trailer:'assets/projects/dashdine/trailer.mp4'},
   drowned :{title:'Drowned Cape',          year:'2026',about:'',role:'',roleList:[],tools:[],time:'',kind:'',play:'',
             cover:'assets/projects/drowned/cover.jpg',  images:[],trailer:'',soon:true},
-  barquillos:{title:'Cooking Barquillos In Madrid',year:'2026',about:'',role:'',roleList:[],tools:[],time:'',kind:'Game jam',play:'',
-            cover:'assets/projects/barquillos/cover.jpg',images:[],trailer:'',soon:true}
+  barquillos:{title:'Atrapa el Barquillo',year:'2026',
+            about:'Cocina barquillos en tu tienda, pero ten cuidado: no son tan fáciles de hacer. Controla el punto exacto de la masa, prepara los ingredientes que pide cada cliente y lánzales el barquillo a medida que entran por la puerta. Un juego de gestión y habilidad, divertido y caótico.',
+            role:'Equipo de seis personas (tres de programación, dos de diseño y una de arte). Mi rol fue de programación.',
+            roleList:[],
+            highlight:'Juego creado para la 8.ª edición de la Game Jam Madrid Crea.',
+            tools:['Unity 2D','C#'], time:'Una semana', kind:'Game jam',
+            play:'https://atrapaelbarquillo.itch.io/atrapa-el-barquillo',
+            cover:'assets/projects/barquillos/cover.jpg',images:['assets/projects/barquillos/shot-1.jpg','assets/projects/barquillos/shot-2.jpg'],trailer:''}
 };
 
 (()=>{
